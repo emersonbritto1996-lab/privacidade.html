@@ -394,6 +394,48 @@
       resize: vertical;
     }
 
+    /* NOVO: botão e mensagens da localização */
+    .btn-localizacao {
+      width: 100%;
+      border: 1px solid #d40000;
+      background: #fff;
+      color: #b00000;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-localizacao:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
+    .ajuda-localizacao {
+      display: block;
+      color: #666;
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 7px;
+    }
+
+    .status-localizacao {
+      color: #166534;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .status-localizacao.erro {
+      background: transparent;
+      color: #b00000;
+      padding: 0;
+      margin-top: 8px;
+    }
+
     .total-final {
       display: flex;
       justify-content: space-between;
@@ -487,8 +529,35 @@
       <div class="dados-cliente">
         <div class="campo">
           <label for="nomeCliente">Seu nome</label>
-          <input type="text" id="nomeCliente" placeholder="Digite seu nome">
+          <input type="text" id="nomeCliente" placeholder="Digite seu nome" autocomplete="name">
         </div>
+
+        <!-- NOVO: endereço digitado e opção de compartilhar localização -->
+        <div class="campo">
+          <label for="enderecoEntrega">Endereço de entrega</label>
+          <textarea
+            id="enderecoEntrega"
+            placeholder="Rua, número, bairro e ponto de referência"
+            autocomplete="street-address"
+            required
+          ></textarea>
+
+          <button
+            class="btn-localizacao"
+            id="btnLocalizacao"
+            type="button"
+            onclick="compartilharLocalizacao()"
+          >
+            📍 Usar minha localização atual
+          </button>
+
+          <small class="ajuda-localizacao">
+            Permita o acesso à localização quando solicitado. Informe também número, bairro e ponto de referência para facilitar a entrega.
+          </small>
+
+          <div id="statusLocalizacao" class="status-localizacao" aria-live="polite"></div>
+        </div>
+
         <div class="campo">
           <label for="observacao">Observação do pedido</label>
           <textarea id="observacao" placeholder="Ex.: sem cebola, pouco sal..."></textarea>
@@ -505,7 +574,7 @@
   </div>
 
   <script>
-    /* CONFIGURAÇÃO */
+    /* CONFIGURAÇÃO ORIGINAL */
     const SUPABASE_URL = "https://gcdkinzbmiwqbgxykyig.supabase.co";
     const SUPABASE_KEY = "sb_publishable_TH7WCi9AbHew5Pb0EyhLTw_ou9xumGN";
     const WHATSAPP = "5597984130587";
@@ -514,6 +583,7 @@
     let produtos = [];
     let carrinho = [];
     let categoriaAtual = "Todos";
+    let linkLocalizacao = "";
 
     /* PREÇO */
     function formatarPreco(valor) {
@@ -777,7 +847,61 @@
       document.getElementById("modal").classList.remove("ativo");
     }
 
-    /* WHATSAPP */
+    /* NOVO: COMPARTILHAR LOCALIZAÇÃO DO CELULAR */
+    function compartilharLocalizacao() {
+      const status = document.getElementById("statusLocalizacao");
+      const botao = document.getElementById("btnLocalizacao");
+
+      if (!navigator.geolocation) {
+        status.classList.add("erro");
+        status.textContent =
+          "Este navegador não oferece localização. Digite seu endereço manualmente.";
+        return;
+      }
+
+      botao.disabled = true;
+      status.classList.remove("erro");
+      status.textContent = "Solicitando localização do celular...";
+
+      navigator.geolocation.getCurrentPosition(
+        function(posicao) {
+          const latitude = posicao.coords.latitude;
+          const longitude = posicao.coords.longitude;
+
+          linkLocalizacao =
+            "https://maps.google.com/?q=" + latitude + "," + longitude;
+
+          status.classList.remove("erro");
+          status.textContent =
+            "Localização adicionada ao pedido. Complete o endereço acima com rua, número e referência.";
+          botao.disabled = false;
+        },
+        function(erro) {
+          linkLocalizacao = "";
+          status.classList.add("erro");
+
+          if (erro.code === erro.PERMISSION_DENIED) {
+            status.textContent =
+              "Permissão negada. Você pode digitar o endereço manualmente.";
+          } else if (erro.code === erro.TIMEOUT) {
+            status.textContent =
+              "A localização demorou demais. Tente novamente ou digite o endereço.";
+          } else {
+            status.textContent =
+              "Não foi possível obter a localização. Digite o endereço manualmente.";
+          }
+
+          botao.disabled = false;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000
+        }
+      );
+    }
+
+    /* WHATSAPP: endereço obrigatório; localização opcional */
     function enviarWhatsApp() {
       if (!carrinho.length) {
         alert("Adicione pelo menos um produto ao pedido.");
@@ -785,6 +909,7 @@
       }
 
       const nome = document.getElementById("nomeCliente").value.trim();
+      const endereco = document.getElementById("enderecoEntrega").value.trim();
       const observacao = document.getElementById("observacao").value.trim();
 
       if (!nome) {
@@ -793,9 +918,21 @@
         return;
       }
 
+      if (!endereco) {
+        alert("Digite o endereço de entrega antes de enviar o pedido.");
+        document.getElementById("enderecoEntrega").focus();
+        return;
+      }
+
       let mensagem = "Olá! Gostaria de fazer um pedido na Rei das Pizzas.\n\n";
       mensagem += "👤 Cliente: " + nome + "\n\n";
-      mensagem += "🛒 Pedido:\n";
+      mensagem += "📍 Endereço de entrega: " + endereco + "\n";
+
+      if (linkLocalizacao) {
+        mensagem += "🗺️ Localização no mapa: " + linkLocalizacao + "\n";
+      }
+
+      mensagem += "\n🛒 Pedido:\n";
 
       let total = 0;
 
@@ -825,11 +962,11 @@
     /* INICIAR */
     carregarProdutos();
   </script>
+
   <footer style="text-align:center; padding:20px 10px; font-size:13px;">
-  <a href="/privacidade.html"
-     style="color:inherit; text-decoration:underline;">
-    Política de Privacidade
-  </a>
+    <a href="/privacidade.html" style="color:inherit; text-decoration:underline;">
+      Política de Privacidade
+    </a>
   </footer>
 </body>
 </html>
