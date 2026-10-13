@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3198437721185489"
+     crossorigin="anonymous"></script>
+
+  <title>Rei das Pizzas | Cardápio</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding-bottom: 95px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #a90000, #e60000);
+      color: white;
+      text-align: center;
+      padding: 28px 18px 25px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .subtitulo {
+      margin-top: 7px;
+      font-size: 15px;
+      opacity: 0.95;
+    }
+
+    main {
+      max-width: 650px;
+      margin: auto;
+      padding: 20px 14px;
+    }
+
+    .titulo-cardapio {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .categorias {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 15px;
+      scrollbar-width: none;
+    }
+
+    .categorias::-webkit-scrollbar {
+      display: none;
+    }
+
+    .categoria {
+      border: none;
+      background: white;
+      color: #555;
+      padding: 10px 15px;
+      border-radius: 20px;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      cursor: pointer;
+    }
+
+    .categoria.ativa {
+      background: #d40000;
+      color: white;
+    }
+
+    #produtos {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .produto {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #eee;
+    }
+
+    .produto.indisponivel {
+      opacity: 0.72;
+    }
+
+    .produto-imagem-area {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #eeeeee;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .produto-imagem {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .produto-sem-imagem {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: #bbbbbb;
+    }
+
+    .produto-conteudo {
+      padding: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .produto-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .produto-nome {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    .produto-preco {
+      font-size: 18px;
+      font-weight: bold;
+      color: #d40000;
+    }
+
+    .produto-status {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #c62828;
+      background: #ffebee;
+      padding: 5px 9px;
+      border-radius: 7px;
+    }
+
+    .btn-adicionar {
+      border: none;
+      background: #16a34a;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 11px 15px;
+      border-radius: 9px;
+      cursor: pointer;
+      min-width: 95px;
+    }
+
+    .btn-adicionar:active {
+      transform: scale(0.96);
+    }
+
+    .btn-adicionar.indisponivel {
+      background: #999;
+      color: white;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .carregando {
+      text-align: center;
+      padding: 40px 10px;
+      color: #666;
+    }
+
+    .erro {
+      background: #fff0f0;
+      color: #b00000;
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .carrinho-barra {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 80px;
+      background: white;
+      border-top: 1px solid #ddd;
+      box-shadow: 0 -3px 12px rgba(0,0,0,0.12);
+      padding: 12px 14px;
+      z-index: 1000;
+    }
+
+    .carrinho-container {
+      max-width: 650px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .carrinho-info {
+      font-size: 14px;
+    }
+
+    .carrinho-quantidade {
+      font-weight: bold;
+      color: #d40000;
+    }
+
+    .carrinho-total {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 3px;
+    }
+
+    .btn-carrinho {
+      border: none;
+      background: #d40000;
+      color: white;
+      padding: 13px 18px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 2000;
+      padding: 15px;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal.ativo {
+      display: flex;
+    }
+
+    .modal-conteudo {
+      width: 100%;
+      max-width: 650px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 18px 18px 0 0;
+      padding: 20px;
+      animation: subir 0.2s ease;
+    }
+
+    @keyframes subir {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-titulo {
+      font-size: 23px;
+      font-weight: bold;
+    }
+
+    .btn-fechar {
+      border: none;
+      background: #eee;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    #lista-carrinho {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .item-carrinho {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+    }
+
+    .item-topo {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .item-preco {
+      color: #d40000;
+      white-space: nowrap;
+    }
+
+    .controles {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 9px;
+    }
+
+    .btn-qtd {
+      border: none;
+      background: #eee;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .qtd {
+      min-width: 22px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .dados-cliente {
+      margin-top: 18px;
+    }
+
+    .campo {
+      margin-bottom: 14px;
+    }
+
+    .campo label {
+      display: block;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .campo input,
+    .campo textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 16px;
+      font-family: Arial, Helvetica, sans-serif;
+      outline: none;
+      background: #fafafa;
+    }
+
+    .campo input:focus,
+    .campo textarea:focus {
+      border-color: #d40000;
+      background: white;
+    }
+
+    .campo textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .total-final {
+      display: flex;
+      justify-content: space-between;
+      font-size: 21px;
+      font-weight: bold;
+      padding: 18px 0;
+      margin-top: 5px;
+      border-top: 2px solid #eee;
+    }
+
+    .btn-whatsapp {
+      width: 100%;
+      border: none;
+      background: #25d366;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      padding: 16px;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+
+    .btn-whatsapp:active {
+      transform: scale(0.98);
+    }
+
+    .carrinho-vazio {
+      text-align: center;
+      color: #777;
+      padding: 30px 10px;
+    }
+
+    footer {
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      padding: 25px 10px;
+    }
+
+    @media (min-width: 600px) {
+      .produto-conteudo { padding: 20px; }
+      .logo { font-size: 36px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">🍕 REI DAS PIZZAS</div>
+    <div class="subtitulo">Cardápio online • Faça seu pedido</div>
+  </header>
+
+  <main>
+    <div class="titulo-cardapio">Nosso Cardápio</div>
+
+    <div class="categorias">
+      <button class="categoria ativa" onclick="filtrarCategoria('Todos', this)">Todos</button>
+      <button class="categoria" onclick="filtrarCategoria('Lanches', this)">🍔 Lanches</button>
+      <button class="categoria" onclick="filtrarCategoria('Bebidas', this)">🥤 Bebidas</button>
+      <button class="categoria" onclick="filtrarCategoria('Pizzas', this)">🍕 Pizzas</button>
+    </div>
+
+    <div id="produtos">
+      <div class="carregando">Carregando cardápio...</div>
+    </div>
+
+    <footer>Rei das Pizzas • Pedido rápido pelo WhatsApp</footer>
+  </main>
+
+  <div class="carrinho-barra">
+    <div class="carrinho-container">
+      <div class="carrinho-info">
+        <div>
+          <span class="carrinho-quantidade" id="quantidade-carrinho">0 itens</span>
+        </div>
+        <div class="carrinho-total" id="total-carrinho">R$ 0,00</div>
+      </div>
+      <button class="btn-carrinho" onclick="abrirCarrinho()">🛒 Ver pedido</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-conteudo">
+      <div class="modal-topo">
+        <div class="modal-titulo">🛒 Seu pedido</div>
+        <button class="btn-fechar" onclick="fecharCarrinho()">×</button>
+      </div>
+
+      <div id="lista-carrinho"></div>
+
+      <div class="dados-cliente">
+        <div class="campo">
+          <label for="nomeCliente">Seu nome</label>
+          <input type="text" id="nomeCliente" placeholder="Digite seu nome">
+        </div>
+        <div class="campo">
+          <label for="observacao">Observação do pedido</label>
+          <textarea id="observacao" placeholder="Ex.: sem cebola, pouco sal..."></textarea>
+        </div>
+      </div>
+
+      <div class="total-final">
+        <span>Total</span>
+        <span id="modal-total">R$ 0,00</span>
+      </div>
+
+      <button class="btn-whatsapp" onclick="enviarWhatsApp()">📲 Fazer pedido pelo WhatsApp</button>
+    </div>
+  </div>
+
+  <script>
+    /* CONFIGURAÇÃO */
+    const SUPABASE_URL = "https://gcdkinzbmiwqbgxykyig.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_TH7WCi9AbHew5Pb0EyhLTw_ou9xumGN";
+    const WHATSAPP = "5597984130587";
+
+    /* VARIÁVEIS */
+    let produtos = [];
+    let carrinho = [];
+    let categoriaAtual = "Todos";
+
+    /* PREÇO */
+    function formatarPreco(valor) {
+      return Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    /* CARREGAR PRODUTOS */
+    async function carregarProdutos() {
+      const container = document.getElementById("produtos");
+
+      try {
+        const resposta = await fetch(
+          SUPABASE_URL + "/rest/v1/produtos?select=id,nome,preco,disponivel,imagem_url&order=id.asc",
+          {
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + SUPABASE_KEY
+            }
+          }
+        );
+
+        if (!resposta.ok) {
+          throw new Error("Erro ao carregar produtos");
+        }
+
+        produtos = await resposta.json();
+
+        if (!produtos.length) {
+          container.innerHTML = `
+            <div class="carregando">Nenhum produto cadastrado.</div>
+          `;
+          return;
+        }
+
+        mostrarProdutos();
+      } catch (erro) {
+        console.error(erro);
+        container.innerHTML = `
+          <div class="erro">
+            Não foi possível carregar o cardápio.
+            <br><br>
+            Verifique sua conexão com a internet.
+          </div>
+        `;
+      }
+    }
+
+    /* DEFINIR CATEGORIA */
+    function descobrirCategoria(nome) {
+      const texto = nome.toLowerCase();
+
+      if (
+        texto.includes("pizza") ||
+        texto.includes("calabresa") ||
+        texto.includes("mussarela") ||
+        texto.includes("frango") ||
+        texto.includes("portuguesa")
+      ) {
+        return "Pizzas";
+      }
+
+      if (
+        texto.includes("coca") ||
+        texto.includes("guaraná") ||
+        texto.includes("guarana") ||
+        texto.includes("suco") ||
+        texto.includes("água") ||
+        texto.includes("agua") ||
+        texto.includes("refrigerante")
+      ) {
+        return "Bebidas";
+      }
+
+      return "Lanches";
+    }
+
+    /* MOSTRAR PRODUTOS */
+    function mostrarProdutos() {
+      const container = document.getElementById("produtos");
+      container.innerHTML = "";
+
+      const lista = categoriaAtual === "Todos"
+        ? produtos
+        : produtos.filter(produto => descobrirCategoria(produto.nome) === categoriaAtual);
+
+      if (!lista.length) {
+        container.innerHTML = `
+          <div class="carregando">Nenhum produto nesta categoria.</div>
+        `;
+        return;
+      }
+
+      lista.forEach(produto => {
+        const div = document.createElement("div");
+        div.className = produto.disponivel === false
+          ? "produto indisponivel"
+          : "produto";
+
+        const imagem = produto.imagem_url
+          ? `
+            <div class="produto-imagem-area">
+              <img class="produto-imagem" src="${produto.imagem_url}" alt="${produto.nome}" loading="lazy">
+            </div>
+          `
+          : `
+            <div class="produto-imagem-area">
+              <div class="produto-sem-imagem">🍕</div>
+            </div>
+          `;
+
+        const botao = produto.disponivel === false
+          ? `
+            <button class="btn-adicionar indisponivel" disabled>Indisponível</button>
+          `
+          : `
+            <button class="btn-adicionar" onclick="adicionar(${produto.id})">+ Adicionar</button>
+          `;
+
+        const status = produto.disponivel === false
+          ? `
+            <div class="produto-status">🔴 Indisponível no momento</div>
+          `
+          : "";
+
+        div.innerHTML = `
+          ${imagem}
+          <div class="produto-conteudo">
+            <div class="produto-info">
+              <div class="produto-nome">${produto.nome}</div>
+              <div class="produto-preco">${formatarPreco(produto.preco)}</div>
+              ${status}
+            </div>
+            ${botao}
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    /* FILTRAR CATEGORIA */
+    function filtrarCategoria(categoria, botao) {
+      categoriaAtual = categoria;
+
+      document.querySelectorAll(".categoria").forEach(btn => {
+        btn.classList.remove("ativa");
+      });
+
+      botao.classList.add("ativa");
+      mostrarProdutos();
+    }
+
+    /* ADICIONAR */
+    function adicionar(id) {
+      const produto = produtos.find(p => p.id === id);
+      if (!produto) return;
+
+      if (produto.disponivel === false) {
+        alert("Este produto está indisponível no momento.");
+        return;
+      }
+
+      const existente = carrinho.find(item => item.id === id);
+
+      if (existente) {
+        existente.quantidade++;
+      } else {
+        carrinho.push({
+          id: produto.id,
+          nome: produto.nome,
+          preco: Number(produto.preco),
+          quantidade: 1
+        });
+      }
+
+      atualizarCarrinho();
+    }
+
+    /* ALTERAR QUANTIDADE */
+    function alterarQuantidade(id, quantidade) {
+      const item = carrinho.find(p => p.id === id);
+      if (!item) return;
+
+      item.quantidade = quantidade;
+
+      if (item.quantidade <= 0) {
+        carrinho = carrinho.filter(p => p.id !== id);
+      }
+
+      atualizarCarrinho();
+    }
+
+    /* ATUALIZAR CARRINHO */
+    function atualizarCarrinho() {
+      let quantidadeTotal = 0;
+      let valorTotal = 0;
+
+      carrinho.forEach(item => {
+        quantidadeTotal += item.quantidade;
+        valorTotal += item.preco * item.quantidade;
+      });
+
+      document.getElementById("quantidade-carrinho").textContent =
+        quantidadeTotal === 1 ? "1 item" : quantidadeTotal + " itens";
+
+      document.getElementById("total-carrinho").textContent = formatarPreco(valorTotal);
+      document.getElementById("modal-total").textContent = formatarPreco(valorTotal);
+
+      mostrarCarrinho();
+    }
+
+    /* MOSTRAR CARRINHO */
+    function mostrarCarrinho() {
+      const lista = document.getElementById("lista-carrinho");
+
+      if (!carrinho.length) {
+        lista.innerHTML = `
+          <div class="carrinho-vazio">
+            Seu carrinho está vazio.
+            <br><br>
+            Adicione algum produto ao pedido.
+          </div>
+        `;
+        return;
+      }
+
+      lista.innerHTML = "";
+
+      carrinho.forEach(item => {
+        const subtotal = item.preco * item.quantidade;
+        const div = document.createElement("div");
+        div.className = "item-carrinho";
+
+        div.innerHTML = `
+          <div class="item-topo">
+            <span>${item.nome}</span>
+            <span class="item-preco">${formatarPreco(subtotal)}</span>
+          </div>
+          <div class="controles">
+            <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, ${item.quantidade - 1})">−</button>
+            <span class="qtd">${item.quantidade}</span>
+            <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, ${item.quantidade + 1})">+</button>
+          </div>
+        `;
+
+        lista.appendChild(div);
+      });
+    }
+
+    /* ABRIR */
+    function abrirCarrinho() {
+      atualizarCarrinho();
+      document.getElementById("modal").classList.add("ativo");
+    }
+
+    /* FECHAR */
+    function fecharCarrinho() {
+      document.getElementById("modal").classList.remove("ativo");
+    }
+
+    /* WHATSAPP */
+    function enviarWhatsApp() {
+      if (!carrinho.length) {
+        alert("Adicione pelo menos um produto ao pedido.");
+        return;
+      }
+
+      const nome = document.getElementById("nomeCliente").value.trim();
+      const observacao = document.getElementById("observacao").value.trim();
+
+      if (!nome) {
+        alert("Digite seu nome antes de enviar o pedido.");
+        document.getElementById("nomeCliente").focus();
+        return;
+      }
+
+      let mensagem = "Olá! Gostaria de fazer um pedido na Rei das Pizzas.\n\n";
+      mensagem += "👤 Cliente: " + nome + "\n\n";
+      mensagem += "🛒 Pedido:\n";
+
+      let total = 0;
+
+      carrinho.forEach(item => {
+        const subtotal = item.preco * item.quantidade;
+        total += subtotal;
+        mensagem += `${item.quantidade}x ${item.nome} — ${formatarPreco(subtotal)}\n`;
+      });
+
+      mensagem += "\n💰 Total: " + formatarPreco(total);
+
+      if (observacao) {
+        mensagem += "\n\n📝 Observação: " + observacao;
+      }
+
+      const url = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(mensagem);
+      window.open(url, "_blank");
+    }
+
+    /* FECHAR CLICANDO FORA */
+    document.getElementById("modal").addEventListener("click", function(event) {
+      if (event.target === this) {
+        fecharCarrinho();
+      }
+    });
+
+    /* INICIAR */
+    carregarProdutos();
+  </script>
+</body>
+</html>
